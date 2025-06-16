@@ -1,1 +1,0 @@
-with packages: streamlit, pandas, scikit-learn, matplotlib, seaborn, xlsxwriter
