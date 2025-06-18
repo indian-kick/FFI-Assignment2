@@ -36,39 +36,58 @@ def load_data(filepath):
 df_target = load_data(os.path.join(folder_path, file1))
 df_softs = [load_data(os.path.join(folder_path, sf)) for sf in selected_soft_indicators]
 
-# === Global Filter Controls ===
-st.sidebar.markdown("### \U0001F5C2 Filter Timeframe")
+# # === Global Filter Controls ===
+# st.sidebar.markdown("### \U0001F5C2 Filter Timeframe")
 
-df_target['Reference Period'] = pd.to_datetime(df_target['Reference Period'])
+# df_target['Reference Period'] = pd.to_datetime(df_target['Reference Period'])
 
-min_date, max_date = df_target['Reference Period'].min().date(), df_target['Reference Period'].max().date()
+# min_date, max_date = df_target['Reference Period'].min().date(), df_target['Reference Period'].max().date()
 
-#start_date = st.sidebar.date_input("Start Date", min_date)
-#end_date = st.sidebar.date_input("End Date", max_date)
+# start_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
+# end_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
 
-start_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
-end_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
+# max_n = len(df_target)
+# n_obs = st.sidebar.slider("Or show last N observations", min_value=5, max_value=max_n, value=30, step=1)
 
-# date_range = st.sidebar.date_input(
-#     "Select Date Range",
-#     value=(min_date, max_date),
-#     min_value=min_date,
-#     max_value=max_date
-# )
+# # === Sync Filters ===
+# apply_n_obs = st.sidebar.checkbox("Apply N observations filter", value=False)
 
-#start_date, end_date = date_range
+# if apply_n_obs:
+#     df_target_filtered = df_target.sort_values('Reference Period').tail(n_obs)
+# else:
+#     df_target_filtered = df_target[(df_target['Reference Period'] >= pd.to_datetime(start_date)) &
+#                                    (df_target['Reference Period'] <= pd.to_datetime(end_date))]
 
-max_n = len(df_target)
-n_obs = st.sidebar.slider("Or show last N observations", min_value=5, max_value=max_n, value=30, step=1)
+# === Global Time Filter (Visible Above Tabs) ===
+st.markdown("### ⏱️ Select Time Range for All Tabs")
 
-# === Sync Filters ===
-apply_n_obs = st.sidebar.checkbox("Apply N observations filter", value=False)
+min_date, max_date = df_target['Reference Period'].min(), df_target['Reference Period'].max()
 
-if apply_n_obs:
-    df_target_filtered = df_target.sort_values('Reference Period').tail(n_obs)
-else:
-    df_target_filtered = df_target[(df_target['Reference Period'] >= pd.to_datetime(start_date)) &
-                                   (df_target['Reference Period'] <= pd.to_datetime(end_date))]
+selected_range = st.slider(
+    "Filter by Reference Period",
+    min_value=min_date,
+    max_value=max_date,
+    value=(min_date, max_date),
+    format="MMM YYYY"
+)
+
+# Add caption to show selected range
+st.caption(f"Showing data from {selected_range[0].strftime('%b %Y')} to {selected_range[1].strftime('%b %Y')}")
+
+# Filter df_target and soft indicators
+df_target_filtered = df_target[
+    (df_target['Reference Period'] >= selected_range[0]) &
+    (df_target['Reference Period'] <= selected_range[1])
+].copy()
+
+df_softs_filtered = []
+for df_soft in df_softs:
+    df_soft_filtered = df_soft[
+        (df_soft['Reference Period'] >= selected_range[0]) &
+        (df_soft['Reference Period'] <= selected_range[1])
+    ].copy()
+    df_softs_filtered.append(df_soft_filtered)
+
 
 # === Tabs ===
 tabs = st.tabs([
@@ -110,7 +129,7 @@ with tabs[2]:
 with tabs[3]:
     st.subheader("Predict Tier-1 Indicator from Soft Indicators")
     df_merge = df_target_filtered[['Reference Period', 'Actual']].rename(columns={'Actual': 'Target'})
-    for i, df_soft in enumerate(df_softs):
+    for i, df_soft in enumerate(df_softs_filtered):
         df_soft_filtered = df_soft[df_soft['Reference Period'].isin(df_merge['Reference Period'])]
         df_merge = pd.merge(df_merge, df_soft_filtered[['Reference Period', 'Actual']], on='Reference Period', how='left')
         df_merge.rename(columns={'Actual': selected_soft_indicators[i].replace('.csv', '')}, inplace=True)
