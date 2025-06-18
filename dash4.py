@@ -61,7 +61,8 @@ df_target['Reference Period'] = pd.to_datetime(df_target['Reference Period'])
 # === Global Time Filter (Visible Above Tabs) ===
 st.markdown("### ⏱️ Select Time Range for All Tabs")
 
-min_date, max_date = df_target['Reference Period'].min().date(), df_target['Reference Period'].max().date()
+min_date = min(df['Reference Period'].min() for df in df_softs).date()
+max_date = max(df['Reference Period'].max() for df in df_softs).date()
 
 selected_range = st.slider(
     "Filter by Reference Period",
