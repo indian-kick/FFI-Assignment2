@@ -39,7 +39,7 @@ df_softs = [load_data(os.path.join(folder_path, sf)) for sf in selected_soft_ind
 # # === Global Filter Controls ===
 # st.sidebar.markdown("### \U0001F5C2 Filter Timeframe")
 
-# df_target['Reference Period'] = pd.to_datetime(df_target['Reference Period'])
+df_target['Reference Period'] = pd.to_datetime(df_target['Reference Period'])
 
 # min_date, max_date = df_target['Reference Period'].min().date(), df_target['Reference Period'].max().date()
 
@@ -61,7 +61,7 @@ df_softs = [load_data(os.path.join(folder_path, sf)) for sf in selected_soft_ind
 # === Global Time Filter (Visible Above Tabs) ===
 st.markdown("### ⏱️ Select Time Range for All Tabs")
 
-min_date, max_date = df_target['Reference Period'].min(), df_target['Reference Period'].max()
+min_date, max_date = df_target['Reference Period'].min().date(), df_target['Reference Period'].max().date()
 
 selected_range = st.slider(
     "Filter by Reference Period",
