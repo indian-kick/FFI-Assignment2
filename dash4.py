@@ -41,13 +41,13 @@ st.sidebar.markdown("### \U0001F5C2 Filter Timeframe")
 
 df_target['Reference Period'] = pd.to_datetime(df_target['Reference Period'])
 
-min_date, max_date = df_target['Reference Period'].min(), df_target['Reference Period'].max()
+min_date, max_date = df_target['Reference Period'].min().date(), df_target['Reference Period'].max().date()
 
 #start_date = st.sidebar.date_input("Start Date", min_date)
 #end_date = st.sidebar.date_input("End Date", max_date)
 
-start_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
-end_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
+start_date = st.sidebar.date_input("Start Date", value=min_date)
+end_date = st.sidebar.date_input("End Date", value=max_date)
 
 max_n = len(df_target)
 n_obs = st.sidebar.slider("Or show last N observations", min_value=5, max_value=max_n, value=30, step=1)
