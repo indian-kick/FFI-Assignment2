@@ -171,7 +171,7 @@ with tabs[5]:
 
         for lag in range(-max_lag, max_lag + 1):
             shifted = df_lag.copy()
-            shifted['Reference Period'] = shifted['Reference Period'] + pd.DateOffset(months=lag)
+            shifted['Reference Period'] = shifted['Reference Period'] - pd.DateOffset(months=lag)
             merged = pd.merge(df_lead, shifted, on='Reference Period')
             if len(merged) >= 3:
                 corr = merged['Lead'].corr(merged['Lag'])
@@ -215,24 +215,6 @@ with tabs[5]:
         best_corr = correlations[best_lag]
 
         st.write(f"📈 Highest correlation at **{best_lag:+} day(s)** lag: **{best_corr:.2f}**")
-
-        fig, ax = plt.subplots()
-        ax.plot(list(correlations.keys()), list(correlations.values()), marker='o')
-        ax.axvline(x=best_lag, color='red', linestyle='--', label=f'Max Corr @ {best_lag:+}d')
-        ax.set_xlabel("Lag (days)")
-        ax.set_ylabel("Correlation")
-        ax.set_title("Correlation vs Lag")
-        ax.legend()
-        st.pyplot(fig)
-
-        df_lag['Reference Period'] = df_lag['Reference Period'] + pd.DateOffset(months=best_lag)
-        merged = pd.merge(df_lead, df_lag, on='Reference Period')
-        fig2, ax2 = plt.subplots()
-        ax2.plot(merged['Reference Period'], merged['Lead'], label=f"{country} (Lead)")
-        ax2.plot(merged['Reference Period'], merged['Lag'], label=f"{country_lag} (Lag, {best_lag:+}d)")
-        ax2.legend()
-        ax2.set_title("Best-Aligned Series Based on Lag")
-        st.pyplot(fig2)
 
     except Exception as e:
         st.warning(f"Could not compute lag correlation: {e}")
