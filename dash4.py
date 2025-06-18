@@ -191,7 +191,7 @@ with tabs[5]:
         ax.legend()
         st.pyplot(fig)
 
-        df_lag['Reference Period'] = df_lag['Reference Period'] + pd.DateOffset(months=best_lag)
+        df_lag['Reference Period'] = df_lag['Reference Period'] - pd.DateOffset(months=best_lag)
         merged = pd.merge(df_lead, df_lag, on='Reference Period')
         fig2, ax2 = plt.subplots()
         ax2.plot(merged['Reference Period'], merged['Lead'], label=f"{country} (Lead)")
