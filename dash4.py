@@ -63,8 +63,15 @@ for df in df_softs:
 # === Global Time Filter (Visible Above Tabs) ===
 st.markdown("### ⏱️ Select Time Range for All Tabs")
 
-min_date = min(df['Reference Period'].min() for df in df_softs).date()
-max_date = max(df['Reference Period'].max() for df in df_softs).date()
+valid_min_dates = [df['Reference Period'].dropna().min() for df in df_softs if not df['Reference Period'].dropna().empty]
+valid_max_dates = [df['Reference Period'].dropna().max() for df in df_softs if not df['Reference Period'].dropna().empty]
+
+if valid_min_dates and valid_max_dates:
+    min_date = min(valid_min_dates).date()
+    max_date = max(valid_max_dates).date()
+else:
+    st.error("No valid Reference Periods found in the selected soft indicators.")
+    st.stop()
 
 selected_range = st.slider(
     "Filter by Reference Period",
