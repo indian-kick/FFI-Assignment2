@@ -46,17 +46,17 @@ min_date, max_date = df_target['Reference Period'].min().date(), df_target['Refe
 #start_date = st.sidebar.date_input("Start Date", min_date)
 #end_date = st.sidebar.date_input("End Date", max_date)
 
-#start_date = st.sidebar.date_input("Start Date", value=min_date)
-#end_date = st.sidebar.date_input("End Date", value=max_date)
+start_date = st.sidebar.date_input("Start Date", value=min_date, min_value=min_date, max_value=max_date)
+end_date = st.sidebar.date_input("End Date", value=max_date, min_value=min_date, max_value=max_date)
 
-date_range = st.sidebar.date_input(
-    "Select Date Range",
-    value=(min_date, max_date),
-    min_value=min_date,
-    max_value=max_date
-)
+# date_range = st.sidebar.date_input(
+#     "Select Date Range",
+#     value=(min_date, max_date),
+#     min_value=min_date,
+#     max_value=max_date
+# )
 
-start_date, end_date = date_range
+#start_date, end_date = date_range
 
 max_n = len(df_target)
 n_obs = st.sidebar.slider("Or show last N observations", min_value=5, max_value=max_n, value=30, step=1)
