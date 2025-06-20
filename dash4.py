@@ -191,14 +191,37 @@ with tabs[5]:
         ax.legend()
         st.pyplot(fig)
 
-        df_lag['Reference Period'] = df_lag['Reference Period'] - pd.DateOffset(months=best_lag)
-        merged = pd.merge(df_lead, df_lag, on='Reference Period')
-        fig2, ax2 = plt.subplots()
-        ax2.plot(merged['Reference Period'], merged['Lead'], label=f"{country} (Lead)")
-        ax2.plot(merged['Reference Period'], merged['Lag'], label=f"{country_lag} (Lag, {best_lag:+}m)")
-        ax2.legend()
-        ax2.set_title("Best-Aligned Series Based on Lag")
+        # df_lag['Reference Period'] = df_lag['Reference Period'] - pd.DateOffset(months=best_lag)
+        # merged = pd.merge(df_lead, df_lag, on='Reference Period')
+        # fig2, ax2 = plt.subplots()
+        # ax2.plot(merged['Reference Period'], merged['Lead'], label=f"{country} (Lead)")
+        # ax2.plot(merged['Reference Period'], merged['Lag'], label=f"{country_lag} (Lag, {best_lag:+}m)")
+        # ax2.legend()
+        # ax2.set_title("Best-Aligned Series Based on Lag")
+        # st.pyplot(fig2)
+
+        fig2, ax1 = plt.subplots()
+
+        # Plot Lead on the left y-axis
+        color1 = 'tab:blue'
+        ax1.set_xlabel("Reference Period")
+        ax1.set_ylabel(f"{country} (Lead)", color=color1)
+        ax1.plot(merged['Reference Period'], merged['Lead'], label=f"{country} (Lead)", color=color1)
+        ax1.tick_params(axis='y', labelcolor=color1)
+        
+        # Create second y-axis for Lag
+        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+        
+        color2 = 'tab:orange'
+        ax2.set_ylabel(f"{country_lag} (Lag, {best_lag:+}m)", color=color2)
+        ax2.plot(merged['Reference Period'], merged['Lag'], label=f"{country_lag} (Lag, {best_lag:+}m)", color=color2)
+        ax2.tick_params(axis='y', labelcolor=color2)
+        
+        # Title and layout
+        fig2.suptitle("Best-Aligned Series Based on Lag")
+        fig2.tight_layout()  # to prevent overlap
         st.pyplot(fig2)
+
 
         max_lag = 365 * 3
         correlations = {}
