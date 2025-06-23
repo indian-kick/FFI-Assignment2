@@ -6,4 +6,4 @@ numpy
 scikit-learn
 openpyxl
 xlsxwriter
-plotly>=5.15.0
+plotly
