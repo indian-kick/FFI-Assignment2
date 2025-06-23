@@ -202,18 +202,38 @@ with tabs[5]:
         df_lag['Reference Period'] = df_lag['Reference Period'] - pd.DateOffset(months=best_lag)
         merged = pd.merge(df_lead, df_lag, on='Reference Period')
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=merged['Reference Period'], y=merged['Lead'], name=f"{country} (Lead)", yaxis='y1'))
-        fig.add_trace(go.Scatter(x=merged['Reference Period'], y=merged['Lag'], name=f"{country_lag} (Lag {best_lag:+}m)", yaxis='y2'))
+        
+        # Lead (left Y-axis)
+        fig.add_trace(go.Scatter(
+            x=merged['Reference Period'], y=merged['Lead'],
+            name=f"{country} (Lead)", yaxis='y1', line=dict(color='blue')
+        ))
+        
+        # Lag (right Y-axis)
+        fig.add_trace(go.Scatter(
+            x=merged['Reference Period'], y=merged['Lag'],
+            name=f"{country_lag} (Lag {best_lag:+}m)", yaxis='y2', line=dict(color='orange')
+        ))
         
         fig.update_layout(
             title="Best-Aligned Series Based on Lag",
-            xaxis=dict(domain=[0.1, 0.9]),
-            yaxis=dict(title=f"{country} (Lead)", titlefont=dict(color='blue'), tickfont=dict(color='blue')),
-            yaxis2=dict(title=f"{country_lag} (Lag)", titlefont=dict(color='orange'), tickfont=dict(color='orange'),
-                        overlaying='y', side='right'),
-            legend=dict(x=0.5, y=1.1, orientation='h')
+            xaxis=dict(title='Reference Period'),
+            yaxis=dict(
+                title=dict(text=f"{country} (Lead)", font=dict(color='blue')),
+                tickfont=dict(color='blue')
+            ),
+            yaxis2=dict(
+                title=dict(text=f"{country_lag} (Lag {best_lag:+}m)", font=dict(color='orange')),
+                tickfont=dict(color='orange'),
+                overlaying='y',
+                side='right'
+            ),
+            legend=dict(x=0.5, y=1.1, orientation='h'),
+            margin=dict(t=60)
         )
+        
         st.plotly_chart(fig, use_container_width=True)
+
 
 
 
