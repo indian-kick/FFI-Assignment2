@@ -342,7 +342,7 @@ with tabs[7]:
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=df_all['Reference Period'], y=df_all['Target'], name='Actual', mode='lines'))
         fig.add_trace(go.Scatter(x=df_all['Reference Period'], y=df_all['Prediction'], name='Predicted', mode='lines'))
-        fig.add_vline(x=last_date, line_dash='dot', line_color='gray', annotation_text='Forecast Start')
+        fig.add_vline(x=last_date.strftime('%Y-%m-%d'), line_dash='dot', line_color='gray', annotation_text='Forecast Start')
         
         fig.add_trace(go.Scatter(
             x=df_forecast['Reference Period'], y=df_forecast['Upper'], mode='lines',
