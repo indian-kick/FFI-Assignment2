@@ -6,6 +6,9 @@ import os
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 import io
+import plotly.express as px
+import plotly.graph_objects as go
+
 
 st.set_page_config(layout="wide")
 
@@ -68,32 +71,35 @@ tabs = st.tabs([
 # === Time Series ===
 with tabs[0]:
     st.subheader("Actual vs Forecast - Tier 1 Indicator")
-    fig, ax = plt.subplots(figsize=(10, 4))
-    ax.plot(df_target_filtered['Reference Period'], df_target_filtered['Actual'], label='Actual', color='blue')
-    ax.plot(df_target_filtered['Reference Period'], df_target_filtered['Median_Forecast'], label='Median Forecast', linestyle='--', color='orange')
-    ax.legend()
-    ax.set_title(file1.replace('.csv', ''))
-    st.pyplot(fig)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df_target_filtered['Reference Period'], y=df_target_filtered['Actual'],
+                             mode='lines+markers', name='Actual'))
+    fig.add_trace(go.Scatter(x=df_target_filtered['Reference Period'], y=df_target_filtered['Median_Forecast'],
+                             mode='lines+markers', name='Median Forecast'))
+    fig.update_layout(title=file1.replace('.csv', ''), xaxis_title='Date', yaxis_title='Value')
+    st.plotly_chart(fig, use_container_width=True)
+
 
 # === Seasonality ===
 with tabs[1]:
     st.subheader("Monthly Surprise Seasonality")
     monthly = df_target_filtered.groupby('Month')['Surprise'].mean()
-    fig, ax = plt.subplots(figsize=(10, 4))
-    sns.barplot(x=monthly.index, y=monthly.values, ax=ax)
-    ax.set_xticks(range(12))
-    ax.set_xticklabels(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
-    ax.set_ylabel("Avg Surprise")
-    st.pyplot(fig)
+    fig = px.bar(x=monthly.index, y=monthly.values,
+                 labels={'x': 'Month', 'y': 'Avg Surprise'},
+                 title='Monthly Surprise Seasonality')
+    fig.update_xaxes(tickmode='array', tickvals=list(range(12)),
+                     ticktext=['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'])
+    st.plotly_chart(fig, use_container_width=True)
+
 
 # === Surprise Distribution ===
 with tabs[2]:
     st.subheader("Surprise Distribution")
-    fig, ax = plt.subplots(figsize=(10, 4))
-    sns.histplot(df_target_filtered['Surprise'], kde=True, ax=ax)
-    ax.set_title("Actual - Forecast Distribution")
-    st.pyplot(fig)
+    fig = px.histogram(df_target_filtered, x='Surprise', nbins=30, marginal="rug", opacity=0.7,
+                       title="Actual - Forecast Distribution")
+    st.plotly_chart(fig, use_container_width=True)
+
 
 # === Multi-Indicator Predictive Model ===
 with tabs[3]:
@@ -117,16 +123,19 @@ with tabs[3]:
             prediction = model.predict(X)
             st.write(f"R² Score: **{model.score(X, y):.2f}**")
 
-            fig, ax = plt.subplots(figsize=(8, 4))
-            ax.plot(df_merge['Reference Period'], y, label='Actual', color='blue')
-            ax.plot(df_merge['Reference Period'], prediction, label='Predicted', color='red')
-            ax.set_title(f"Prediction of {file1.replace('.csv', '')}")
-            ax.legend()
-            st.pyplot(fig)
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=df_merge['Reference Period'], y=y, name='Actual'))
+            fig.add_trace(go.Scatter(x=df_merge['Reference Period'], y=prediction, name='Predicted'))
+            fig.update_layout(title=f"Prediction of {file1.replace('.csv', '')}", xaxis_title='Date', yaxis_title='Value')
+            st.plotly_chart(fig, use_container_width=True)
+
 
             st.write("\U0001F4CB **Feature Importance**")
             imp = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
-            st.bar_chart(imp)
+            fig = px.bar(x=imp.index, y=imp.values, labels={'x': 'Feature', 'y': 'Importance'},
+                         title="Feature Importance")
+            st.plotly_chart(fig, use_container_width=True)
+
     else:
         st.warning("Not enough overlapping data to build model.")
 
@@ -143,12 +152,12 @@ with tabs[4]:
         merged = pd.merge(df_target_filtered[['Reference Period', 'Actual']],
                           df_other_filtered[['Reference Period', 'Actual']],
                           on='Reference Period', suffixes=(f'_{country}', f'_{country2}'))
-        fig, ax = plt.subplots(figsize=(10, 4))
-        ax.plot(merged['Reference Period'], merged[f'Actual_{country}'], label=country)
-        ax.plot(merged['Reference Period'], merged[f'Actual_{country2}'], label=country2)
-        ax.legend()
-        ax.set_title(f"{file1.replace('.csv', '')} Comparison")
-        st.pyplot(fig)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=merged['Reference Period'], y=merged[f'Actual_{country}'], name=country))
+        fig.add_trace(go.Scatter(x=merged['Reference Period'], y=merged[f'Actual_{country2}'], name=country2))
+        fig.update_layout(title=f"{file1.replace('.csv', '')} Comparison", xaxis_title='Date')
+        st.plotly_chart(fig, use_container_width=True)
+
     except Exception as e:
         st.warning(f"Could not load file: {e}")
 
@@ -182,45 +191,30 @@ with tabs[5]:
 
         st.write(f"📈 Highest correlation at **{best_lag:+} month(s)** lag: **{best_corr:.2f}**")
 
-        fig, ax = plt.subplots()
-        ax.plot(list(correlations.keys()), list(correlations.values()), marker='o')
-        ax.axvline(x=best_lag, color='red', linestyle='--', label=f'Max Corr @ {best_lag:+}m')
-        ax.set_xlabel("Lag (months)")
-        ax.set_ylabel("Correlation")
-        ax.set_title("Correlation vs Lag")
-        ax.legend()
-        st.pyplot(fig)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=list(correlations.keys()), y=list(correlations.values()),
+                                 mode='lines+markers', name='Correlation'))
+        fig.add_vline(x=best_lag, line_dash="dash", line_color="red", annotation_text=f'Max Corr @ {best_lag:+}m')
+        fig.update_layout(title='Correlation vs Lag', xaxis_title='Lag (months)', yaxis_title='Correlation')
+        st.plotly_chart(fig, use_container_width=True)
+
 
         df_lag['Reference Period'] = df_lag['Reference Period'] - pd.DateOffset(months=best_lag)
         merged = pd.merge(df_lead, df_lag, on='Reference Period')
-        # fig2, ax2 = plt.subplots()
-        # ax2.plot(merged['Reference Period'], merged['Lead'], label=f"{country} (Lead)")
-        # ax2.plot(merged['Reference Period'], merged['Lag'], label=f"{country_lag} (Lag, {best_lag:+}m)")
-        # ax2.legend()
-        # ax2.set_title("Best-Aligned Series Based on Lag")
-        # st.pyplot(fig2)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=merged['Reference Period'], y=merged['Lead'], name=f"{country} (Lead)", yaxis='y1'))
+        fig.add_trace(go.Scatter(x=merged['Reference Period'], y=merged['Lag'], name=f"{country_lag} (Lag {best_lag:+}m)", yaxis='y2'))
+        
+        fig.update_layout(
+            title="Best-Aligned Series Based on Lag",
+            xaxis=dict(domain=[0.1, 0.9]),
+            yaxis=dict(title=f"{country} (Lead)", titlefont=dict(color='blue'), tickfont=dict(color='blue')),
+            yaxis2=dict(title=f"{country_lag} (Lag)", titlefont=dict(color='orange'), tickfont=dict(color='orange'),
+                        overlaying='y', side='right'),
+            legend=dict(x=0.5, y=1.1, orientation='h')
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-        fig2, ax1 = plt.subplots()
-
-        # Plot Lead on the left y-axis
-        color1 = 'tab:blue'
-        ax1.set_xlabel("Reference Period")
-        ax1.set_ylabel(f"{country} (Lead)", color=color1)
-        ax1.plot(merged['Reference Period'], merged['Lead'], label=f"{country} (Lead)", color=color1)
-        ax1.tick_params(axis='y', labelcolor=color1)
-        
-        # Create second y-axis for Lag
-        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-        
-        color2 = 'tab:orange'
-        ax2.set_ylabel(f"{country_lag} (Lag, {best_lag:+}m)", color=color2)
-        ax2.plot(merged['Reference Period'], merged['Lag'], label=f"{country_lag} (Lag, {best_lag:+}m)", color=color2)
-        ax2.tick_params(axis='y', labelcolor=color2)
-        
-        # Title and layout
-        fig2.suptitle("Best-Aligned Series Based on Lag")
-        fig2.tight_layout()  # to prevent overlap
-        st.pyplot(fig2)
 
 
         max_lag = 365 * 3
@@ -254,10 +248,9 @@ with tabs[6]:
             df_asset = pd.read_csv(asset_file, parse_dates=["Release Date"])
             merged = pd.merge(df_target[['Release Date', 'Surprise']], df_asset, on='Release Date')
             st.write("Correlation Surprise vs Return: ", round(merged['Surprise'].corr(merged['Return']), 2))
-            fig, ax = plt.subplots()
-            sns.scatterplot(data=merged, x='Surprise', y='Return', ax=ax)
-            ax.set_title("Market Return vs Economic Surprise")
-            st.pyplot(fig)
+            fig = px.scatter(merged, x='Surprise', y='Return', title="Market Return vs Economic Surprise")
+            st.plotly_chart(fig, use_container_width=True)
+
         except Exception as e:
             st.warning(f"Could not process file: {e}")
 
@@ -326,17 +319,25 @@ with tabs[7]:
         ], ignore_index=True)
 
         # === Plot Forecast ===
-        fig, ax = plt.subplots(figsize=(10, 4))
-        ax.plot(df_all['Reference Period'], df_all['Target'], label='Actual', color='blue')
-        ax.plot(df_all['Reference Period'], df_all['Prediction'], label='Predicted', color='red', linestyle='--')
-        ax.axvline(x=last_date, color='gray', linestyle=':', label='Forecast Start')
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=df_all['Reference Period'], y=df_all['Target'], name='Actual', mode='lines'))
+        fig.add_trace(go.Scatter(x=df_all['Reference Period'], y=df_all['Prediction'], name='Predicted', mode='lines'))
+        fig.add_vline(x=last_date, line_dash='dot', line_color='gray', annotation_text='Forecast Start')
+        
+        fig.add_trace(go.Scatter(
+            x=df_forecast['Reference Period'], y=df_forecast['Upper'], mode='lines',
+            line=dict(width=0), showlegend=False
+        ))
+        fig.add_trace(go.Scatter(
+            x=df_forecast['Reference Period'], y=df_forecast['Lower'], mode='lines',
+            fill='tonexty', fillcolor='rgba(255,0,0,0.2)', line=dict(width=0),
+            name='±1 Std Dev'
+        ))
+        
+        fig.update_layout(title="Forecast with Manual Inputs",
+                          xaxis_title='Date', yaxis_title='Value')
+        st.plotly_chart(fig, use_container_width=True)
 
-        ax.fill_between(df_forecast['Reference Period'], df_forecast['Lower'], df_forecast['Upper'],
-                        color='red', alpha=0.2, label='±1 Std Dev')
-
-        ax.set_title(f"Forecast with Manual Inputs - {file1.replace('.csv', '')}")
-        ax.legend()
-        st.pyplot(fig)
 
         # === Forecast Table ===
         st.markdown("### 🔮 Forecast Table (Next 12 Months)")
