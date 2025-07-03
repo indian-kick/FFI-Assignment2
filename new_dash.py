@@ -64,9 +64,13 @@ else:
 
 # === Tabs ===
 tabs = st.tabs([
-    "\U0001F4C8 Time Series", "\U0001F4C5 Seasonality", "\U0001F4C9 Surprise Distribution",
-    "\U0001F52C Multi-Indicator Prediction", "\U0001F30D Cross-Country Comparison",
-    "\U0001F310 Intermarket Lag Analysis", "\U0001F4B2 Market Reaction", "⏰ Forecast Next Release", "\U0001F4BE Export"])
+    "📈 Time Series", "📅 Seasonality", "📊 Surprise Distribution",
+    "🔮 Multi-Indicator Prediction", "🌍 Cross-Country Comparison",
+    "🌐 Intermarket Lag Analysis", "💹 Market Reaction",
+    "⏰ Forecast Next Release", "💾 Export",
+    "📤 Upload & Compare", "📊 Rate Cycle Regimes"
+])
+
 
 # === Time Series ===
 with tabs[0]:
@@ -409,7 +413,6 @@ with tabs[8]:
 
 
 # === CUSTOM TAB 1: Upload Your Own Data and Compare ===
-tabs.append("📤 Upload & Compare")
 
 with tabs[9]:
     st.subheader("Upload Your Own Time Series and Compare with Indicators")
@@ -442,7 +445,6 @@ with tabs[9]:
             st.warning(f"Could not process uploaded file: {e}")
 
 # === CUSTOM TAB 2: Rate Cycle Regimes with Indicators ===
-tabs.append("📊 Rate Cycle Regimes")
 
 with tabs[10]:
     st.subheader("Fed Rate Cycle Regimes and Overlayed Indicators")
