@@ -173,10 +173,10 @@ with tabs[4]:
 with tabs[5]:
     st.subheader("Intermarket Lead-Lag Correlation")
 
-    country_lag = st.selectbox("Select Country for Comparison", countries)
+    country_lag = st.selectbox("Select Country for Comparison", countries, key="lag_country_selector")
     lag_folder_path = os.path.join("Data", country_lag)
     lag_files = [f for f in os.listdir(lag_folder_path) if f.endswith(".csv")]
-    lag_file = st.selectbox("Select Indicator CSV", lag_files)
+    lag_file = st.selectbox("Select Indicator CSV", lag_files, key="lag_file_selector")
 
     try:
         df_lead = df_target_filtered[['Reference Period', 'Actual']].rename(columns={"Actual": "Lead"})
