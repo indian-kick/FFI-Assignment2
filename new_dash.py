@@ -451,7 +451,7 @@ with tabs[10]:
 
     try:
         # Load and clean the Fed rate data
-        fed_df = pd.read_csv("Data/US/effectivefedfundsrate.csv", parse_dates=[0])
+        fed_df = pd.read_csv("FEDFUNDS (2).csv", parse_dates=[0])
         fed_df.columns = ['Date', 'Rate']
 
         # Coerce invalid strings to NaN
