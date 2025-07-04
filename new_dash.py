@@ -450,50 +450,55 @@ with tabs[10]:
     st.subheader("Rate Cycle Regimes (Fed Funds)")
 
     try:
-        # Load and clean the Fed rate data
-        fed_df = pd.read_csv("FEDFUNDS (2).csv", parse_dates=[0])
-        fed_df.columns = ['Date', 'Rate']
+        fed_df = pd.read_csv("Data/US/effectivefedfundsrate.csv")
 
-        # Coerce invalid strings to NaN
+        # Rename and parse dates
+        fed_df.columns = ['Date', 'Rate']
+        fed_df['Date'] = pd.to_datetime(fed_df['Date'], errors='coerce')
+
+        # Coerce Rate to numeric
         fed_df['Rate'] = pd.to_numeric(fed_df['Rate'], errors='coerce')
 
-        # Drop rows where Rate is missing
-        fed_df.dropna(subset=['Rate'], inplace=True)
-        fed_df.sort_values('Date', inplace=True)
+        # Drop rows with invalid dates or rates
+        fed_df.dropna(subset=['Date', 'Rate'], inplace=True)
+        fed_df = fed_df.sort_values('Date')
 
-        # Identify Hike or Cut regime based on rate change
+        # Identify regime
         fed_df['Diff'] = fed_df['Rate'].diff()
         fed_df['Regime'] = np.where(fed_df['Diff'] > 0, 'Hike',
                             np.where(fed_df['Diff'] < 0, 'Cut', np.nan))
         fed_df['Regime'] = fed_df['Regime'].fillna(method='ffill')
 
-        # Identify when regime changes
+        # Find regime periods
         regime_changes = fed_df.loc[fed_df['Regime'] != fed_df['Regime'].shift()]
         regime_periods = []
 
         for i in range(len(regime_changes) - 1):
-            start_date = regime_changes.iloc[i]['Date']
-            end_date = regime_changes.iloc[i + 1]['Date']
+            start = pd.to_datetime(regime_changes.iloc[i]['Date'])
+            end = pd.to_datetime(regime_changes.iloc[i + 1]['Date'])
             regime = regime_changes.iloc[i]['Regime']
-            regime_periods.append((start_date, end_date, regime))
+            regime_periods.append((start, end, regime))
 
-        # Build plot
+        # Plot
         fig = go.Figure()
 
-        # Add shaded regions for regimes
         for start, end, regime in regime_periods:
             color = 'rgba(255,0,0,0.15)' if regime == 'Hike' else 'rgba(0,0,255,0.15)'
-            fig.add_vrect(x0=start, x1=end, fillcolor=color, opacity=0.4, line_width=0)
+            fig.add_vrect(
+                x0=start, x1=end,
+                fillcolor=color, opacity=0.4, line_width=0
+            )
 
-        # Add Fed Funds Rate line
         fig.add_trace(go.Scatter(
             x=fed_df['Date'], y=fed_df['Rate'],
             mode='lines', name='Fed Funds Rate',
             line=dict(color='black', width=2)
         ))
 
-        fig.update_layout(title="Fed Funds Rate Regime Phases",
-                          xaxis_title="Date", yaxis_title="Rate (%)")
+        fig.update_layout(
+            title="Fed Funds Rate Regimes",
+            xaxis_title="Date", yaxis_title="Rate (%)"
+        )
 
         st.plotly_chart(fig, use_container_width=True)
 
