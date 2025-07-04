@@ -518,6 +518,35 @@ with tabs[10]:
 
         st.plotly_chart(fig, use_container_width=True)
 
+        # === Add Indicators Overlay ===
+        st.markdown("### 📈 Overlay Economic Indicators")
+
+        overlay_country = st.selectbox("Select Country for Overlay", countries, key="overlay_country")
+        overlay_files = os.listdir(os.path.join("Data", overlay_country))
+        selected_overlay_inds = st.multiselect("Select Indicator(s) to Overlay", [f for f in overlay_files if f.endswith('.csv')],
+                                               key="overlay_indicators")
+
+        for f in selected_overlay_inds:
+            try:
+                df_overlay = load_data(os.path.join("Data", overlay_country, f))
+                df_overlay = df_overlay[['Reference Period', 'Actual']].rename(columns={'Reference Period': 'Date'})
+                df_overlay = df_overlay.dropna(subset=['Date', 'Actual'])
+                df_overlay = df_overlay[df_overlay['Date'].between(fed_df['Date'].min(), fed_df['Date'].max())]
+                df_overlay.sort_values('Date', inplace=True)
+
+                fig.add_trace(go.Scatter(
+                    x=df_overlay['Date'],
+                    y=df_overlay['Actual'],
+                    mode='lines+markers',
+                    name=f"{f.replace('.csv','')} ({overlay_country})"
+                ))
+
+            except Exception as e:
+                st.warning(f"Could not load {f}: {e}")
+
+        st.plotly_chart(fig, use_container_width=True)
+
+
     except FileNotFoundError:
         st.error("❌ Default file not found. Please upload a Fed Funds CSV.")
     except Exception as e:
