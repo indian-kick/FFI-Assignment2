@@ -452,7 +452,7 @@ with tabs[10]:
     try:
         fed_df = pd.read_csv("FEDFUNDS (2).csv")
 
-        # Rename columns safely
+        # Clean column names
         fed_df.rename(columns={
             'observation_date': 'Date',
             'FEDFUNDS': 'Rate'
@@ -461,6 +461,13 @@ with tabs[10]:
         # Parse and clean data
         fed_df['Date'] = pd.to_datetime(fed_df['Date'], errors='coerce')
         fed_df['Rate'] = pd.to_numeric(fed_df['Rate'], errors='coerce')
+
+        # Filter out invalid rows and log them if needed
+        invalid_rows = fed_df[fed_df[['Date', 'Rate']].isnull().any(axis=1)]
+        if not invalid_rows.empty:
+            st.warning("⚠️ Some rows had invalid date or rate values and were dropped.")
+            st.dataframe(invalid_rows)
+
         fed_df.dropna(subset=['Date', 'Rate'], inplace=True)
         fed_df.sort_values('Date', inplace=True)
 
@@ -470,10 +477,9 @@ with tabs[10]:
                             np.where(fed_df['Diff'] < 0, 'Cut', np.nan))
         fed_df['Regime'] = fed_df['Regime'].fillna(method='ffill')
 
-        # Find regime change periods
+        # Identify contiguous rate regimes
         regime_changes = fed_df.loc[fed_df['Regime'] != fed_df['Regime'].shift()]
         regime_periods = []
-
         for i in range(len(regime_changes) - 1):
             start = regime_changes.iloc[i]['Date']
             end = regime_changes.iloc[i + 1]['Date']
@@ -502,5 +508,4 @@ with tabs[10]:
         st.plotly_chart(fig, use_container_width=True)
 
     except Exception as e:
-        st.error(f"Could not load Fed Rate file or plot: {e}")
-
+        st.error(f"❌ Could not load Fed Rate file or plot: {e}")
