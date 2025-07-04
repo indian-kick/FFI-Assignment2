@@ -450,7 +450,7 @@ with tabs[10]:
     st.subheader("Fed Rate Cycle Regimes and Overlayed Indicators")
 
     try:
-        fed_df = pd.read_csv("FEDFUNDS (1).csv", parse_dates=[0])
+        fed_df = pd.read_csv("FEDFUNDS (2).csv", parse_dates=[0])
         fed_df.columns = ['Date', 'Rate']
         fed_df['Rate'] = pd.to_numeric(fed_df['Rate'], errors='coerce')
 
