@@ -479,9 +479,11 @@ with tabs[10]:
 
         # Compute rate regime
         fed_df['Diff'] = fed_df['Rate'].diff()
-        fed_df['Regime'] = np.where(fed_df['Diff'] > 0, 'Hike',
-                             np.where(fed_df['Diff'] < 0, 'Cut', np.nan))
+        fed_df['Regime'] = pd.Series(index=fed_df.index, dtype="object")
+        fed_df.loc[fed_df['Diff'] > 0, 'Regime'] = 'Hike'
+        fed_df.loc[fed_df['Diff'] < 0, 'Regime'] = 'Cut'
         fed_df['Regime'] = fed_df['Regime'].fillna(method='ffill')
+
 
         # Extract contiguous regime periods
         regime_changes = fed_df.loc[fed_df['Regime'] != fed_df['Regime'].shift()]
