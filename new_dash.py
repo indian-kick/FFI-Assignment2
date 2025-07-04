@@ -458,7 +458,7 @@ with tabs[10]:
         if fed_file is not None:
             fed_df = pd.read_csv(fed_file)
         else:
-            fed_df = pd.read_csv("FEDFUNDS.csv")  # <- change to your correct local file path
+            fed_df = pd.read_csv("fed_funds_daily_2000_2025.csv")  # <- change to your correct local file path
 
         # Rename columns and validate
         fed_df.rename(columns={'observation_date': 'Date', 'FEDFUNDS': 'Rate'}, inplace=True)
