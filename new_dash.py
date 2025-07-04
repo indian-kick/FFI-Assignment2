@@ -461,12 +461,29 @@ with tabs[10]:
 
         fig = go.Figure()
 
-        # Shade regimes
-        for _, group_df in fed_df.groupby('Group'):
-            start = group_df['Date'].min()
-            end = group_df['Date'].max()
-            color = 'rgba(255,0,0,0.1)' if group_df['Regime'].iloc[0] == 'Hike' else 'rgba(0,0,255,0.1)'
-            fig.add_vrect(x0=start, x1=end, fillcolor=color, opacity=0.4, line_width=0)
+    # Define regime shifts: from hike to cut, and cut to hike
+    fed_df['Diff'] = fed_df['Rate'].diff()
+    fed_df['Regime'] = np.where(fed_df['Diff'] > 0, 'Hike',
+                        np.where(fed_df['Diff'] < 0, 'Cut', np.nan))
+    
+    # Forward-fill regime, only when regime changes
+    fed_df['Regime'] = fed_df['Regime'].fillna(method='ffill')
+    
+    # Identify regime change points (Hike -> Cut or Cut -> Hike)
+    regime_changes = fed_df.loc[fed_df['Regime'] != fed_df['Regime'].shift()]
+    regime_periods = []
+    
+    for i in range(len(regime_changes) - 1):
+        start_date = regime_changes.iloc[i]['Date']
+        end_date = regime_changes.iloc[i+1]['Date']
+        regime = regime_changes.iloc[i]['Regime']
+        regime_periods.append((start_date, end_date, regime))
+    
+    # Shade between change points
+    for start, end, regime in regime_periods:
+        color = 'rgba(255,0,0,0.15)' if regime == 'Hike' else 'rgba(0,0,255,0.15)'
+        fig.add_vrect(x0=start, x1=end, fillcolor=color, opacity=0.4, line_width=0)
+
 
         # Plot Fed Rate
         fig.add_trace(go.Scatter(x=fed_df['Date'], y=fed_df['Rate'],
