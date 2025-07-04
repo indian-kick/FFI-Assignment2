@@ -452,30 +452,31 @@ with tabs[10]:
     try:
         fed_df = pd.read_csv("FEDFUNDS (2).csv")
 
-        # Rename and parse dates
-        fed_df.columns = ['Date', 'Rate']
+        # Rename columns safely
+        fed_df.rename(columns={
+            'observation_date': 'Date',
+            'FEDFUNDS': 'Rate'
+        }, inplace=True)
+
+        # Parse and clean data
         fed_df['Date'] = pd.to_datetime(fed_df['Date'], errors='coerce')
-
-        # Coerce Rate to numeric
         fed_df['Rate'] = pd.to_numeric(fed_df['Rate'], errors='coerce')
-
-        # Drop rows with invalid dates or rates
         fed_df.dropna(subset=['Date', 'Rate'], inplace=True)
-        fed_df = fed_df.sort_values('Date')
+        fed_df.sort_values('Date', inplace=True)
 
-        # Identify regime
+        # Identify rate regime direction
         fed_df['Diff'] = fed_df['Rate'].diff()
         fed_df['Regime'] = np.where(fed_df['Diff'] > 0, 'Hike',
                             np.where(fed_df['Diff'] < 0, 'Cut', np.nan))
         fed_df['Regime'] = fed_df['Regime'].fillna(method='ffill')
 
-        # Find regime periods
+        # Find regime change periods
         regime_changes = fed_df.loc[fed_df['Regime'] != fed_df['Regime'].shift()]
         regime_periods = []
 
         for i in range(len(regime_changes) - 1):
-            start = pd.to_datetime(regime_changes.iloc[i]['Date'])
-            end = pd.to_datetime(regime_changes.iloc[i + 1]['Date'])
+            start = regime_changes.iloc[i]['Date']
+            end = regime_changes.iloc[i + 1]['Date']
             regime = regime_changes.iloc[i]['Regime']
             regime_periods.append((start, end, regime))
 
@@ -483,11 +484,8 @@ with tabs[10]:
         fig = go.Figure()
 
         for start, end, regime in regime_periods:
-            color = 'rgba(255,0,0,0.15)' if regime == 'Hike' else 'rgba(0,0,255,0.15)'
-            fig.add_vrect(
-                x0=start, x1=end,
-                fillcolor=color, opacity=0.4, line_width=0
-            )
+            color = 'rgba(255,0,0,0.2)' if regime == 'Hike' else 'rgba(0,0,255,0.2)'
+            fig.add_vrect(x0=start, x1=end, fillcolor=color, opacity=0.3, line_width=0)
 
         fig.add_trace(go.Scatter(
             x=fed_df['Date'], y=fed_df['Rate'],
@@ -497,10 +495,12 @@ with tabs[10]:
 
         fig.update_layout(
             title="Fed Funds Rate Regimes",
-            xaxis_title="Date", yaxis_title="Rate (%)"
+            xaxis_title="Date", yaxis_title="Rate (%)",
+            showlegend=True
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
     except Exception as e:
         st.error(f"Could not load Fed Rate file or plot: {e}")
+
