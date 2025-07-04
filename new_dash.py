@@ -450,7 +450,7 @@ with tabs[10]:
     st.subheader("Rate Cycle Regimes (Fed Funds)")
 
     try:
-        fed_df = pd.read_csv("Data/US/effectivefedfundsrate.csv")
+        fed_df = pd.read_csv("FEDFUNDS (2).csv")
 
         # Rename and parse dates
         fed_df.columns = ['Date', 'Rate']
