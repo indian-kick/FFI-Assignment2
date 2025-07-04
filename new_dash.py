@@ -446,23 +446,29 @@ with tabs[9]:
 
 # === CUSTOM TAB 2: Rate Cycle Regimes with Indicators ===
 
+# === CUSTOM TAB 2: Rate Cycle Regimes with Indicators ===
 with tabs[10]:
     st.subheader("Rate Cycle Regimes (Fed Funds)")
 
+    # Let user upload or use default
+    st.markdown("Upload a Fed Funds Rate CSV or use default.")
+    fed_file = st.file_uploader("Upload CSV (Columns: observation_date, FEDFUNDS)", type=["csv"], key="fed_upload")
+
     try:
-        fed_df = pd.read_csv("FEDFUNDS (2).csv")
+        if fed_file is not None:
+            fed_df = pd.read_csv(fed_file)
+        else:
+            fed_df = pd.read_csv("FEDFUNDS.csv")  # <- change to your correct local file path
 
-        # Clean column names
-        fed_df.rename(columns={
-            'observation_date': 'Date',
-            'FEDFUNDS': 'Rate'
-        }, inplace=True)
+        # Rename columns and validate
+        fed_df.rename(columns={'observation_date': 'Date', 'FEDFUNDS': 'Rate'}, inplace=True)
+        if 'Date' not in fed_df.columns or 'Rate' not in fed_df.columns:
+            st.error("❌ Required columns 'Date' and 'Rate' not found.")
+            st.stop()
 
-        # Parse and clean data
         fed_df['Date'] = pd.to_datetime(fed_df['Date'], errors='coerce')
         fed_df['Rate'] = pd.to_numeric(fed_df['Rate'], errors='coerce')
 
-        # Filter out invalid rows and log them if needed
         invalid_rows = fed_df[fed_df[['Date', 'Rate']].isnull().any(axis=1)]
         if not invalid_rows.empty:
             st.warning("⚠️ Some rows had invalid date or rate values and were dropped.")
@@ -471,13 +477,13 @@ with tabs[10]:
         fed_df.dropna(subset=['Date', 'Rate'], inplace=True)
         fed_df.sort_values('Date', inplace=True)
 
-        # Identify rate regime direction
+        # Compute rate regime
         fed_df['Diff'] = fed_df['Rate'].diff()
         fed_df['Regime'] = np.where(fed_df['Diff'] > 0, 'Hike',
-                            np.where(fed_df['Diff'] < 0, 'Cut', np.nan))
+                             np.where(fed_df['Diff'] < 0, 'Cut', np.nan))
         fed_df['Regime'] = fed_df['Regime'].fillna(method='ffill')
 
-        # Identify contiguous rate regimes
+        # Extract contiguous regime periods
         regime_changes = fed_df.loc[fed_df['Regime'] != fed_df['Regime'].shift()]
         regime_periods = []
         for i in range(len(regime_changes) - 1):
@@ -486,9 +492,12 @@ with tabs[10]:
             regime = regime_changes.iloc[i]['Regime']
             regime_periods.append((start, end, regime))
 
+        if not regime_periods:
+            st.info("No regime changes detected.")
+            st.stop()
+
         # Plot
         fig = go.Figure()
-
         for start, end, regime in regime_periods:
             color = 'rgba(255,0,0,0.2)' if regime == 'Hike' else 'rgba(0,0,255,0.2)'
             fig.add_vrect(x0=start, x1=end, fillcolor=color, opacity=0.3, line_width=0)
@@ -500,12 +509,15 @@ with tabs[10]:
         ))
 
         fig.update_layout(
-            title="Fed Funds Rate Regimes",
+            title="Fed Funds Rate Regimes (Hike = Red, Cut = Blue)",
             xaxis_title="Date", yaxis_title="Rate (%)",
             showlegend=True
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
+    except FileNotFoundError:
+        st.error("❌ Default file not found. Please upload a Fed Funds CSV.")
     except Exception as e:
-        st.error(f"❌ Could not load Fed Rate file or plot: {e}")
+        st.error(f"❌ Could not process Fed Funds data: {e}")
+
